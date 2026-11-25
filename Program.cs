@@ -21,7 +21,7 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
 
 builder.Services.AddScoped<IBookService, BookService>();
 
-// builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IMemberService, MemberService>();
 
 var app = builder.Build();//finishes the registration phase and creates the app.
 
