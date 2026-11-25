@@ -1,0 +1,11 @@
+
+@host = http://localhost:5116
+
+### Get all books
+GET {{host}}/api/books
+Accept: application/json
+
+GET {{host}}/api/books/{id}
+Accept: application/json
+
+
