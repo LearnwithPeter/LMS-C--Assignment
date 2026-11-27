@@ -1,6 +1,7 @@
 using LibraryManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using LibraryManagement.Api.Services;
+using LibraryManagement.Api.Middleware;
 
 
 
@@ -23,7 +24,13 @@ builder.Services.AddScoped<IBookService, BookService>();
 
 builder.Services.AddScoped<IMemberService, MemberService>();
 
+builder.Services.AddScoped<ILoanService, LoanService>();
+
+
 var app = builder.Build();//finishes the registration phase and creates the app.
+
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
