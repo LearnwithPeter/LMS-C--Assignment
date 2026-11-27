@@ -2,6 +2,7 @@ using LibraryManagement.Api.Data;
 using LibraryManagement.Api.Dtos;
 using LibraryManagement.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using LibraryManagement.Api.Exceptions;
 
 namespace LibraryManagement.Api.Services;
 
@@ -14,11 +15,38 @@ public class BookService : IBookService
         _db = db;
     }
 
-    public async Task<List<BookDto>> GetAllAsync()
+   public async Task<PagedResult<BookDto>> GetPagedAsync(BookQuery query)
+{
+    var books = _db.Books.AsNoTracking();
+
+    if (!string.IsNullOrWhiteSpace(query.Author))
     {
-        var books = await _db.Books.AsNoTracking().ToListAsync();
-        return books.Select(ToDto).ToList();
+        var author = query.Author.Trim().ToLower();
+        books = books.Where(b => b.Author.ToLower().Contains(author));
     }
+
+    if (query.Available == true)
+        books = books.Where(b => b.AvailableCopies > 0);
+    else if (query.Available == false)
+        books = books.Where(b => b.AvailableCopies == 0);
+
+    var totalCount = await books.CountAsync();
+
+    var items = await books
+        .OrderBy(b => b.Title)
+        .ThenBy(b => b.Id)
+        .Skip((query.Page - 1) * query.PageSize)
+        .Take(query.PageSize)
+        .ToListAsync();
+
+    return new PagedResult<BookDto>
+    {
+        Items = items.Select(ToDto).ToList(),
+        Page = query.Page,
+        PageSize = query.PageSize,
+        TotalCount = totalCount
+    };
+}
 
     public async Task<BookDto?> GetByIdAsync(int id)
     {
@@ -60,15 +88,18 @@ public class BookService : IBookService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var book = await _db.Books.FindAsync(id);
-        if (book is null) return false;
+   public async Task<bool> DeleteAsync(int id)
+{
+    var book = await _db.Books.FindAsync(id);
+    if (book is null) return false;
 
-        _db.Books.Remove(book);
-        await _db.SaveChangesAsync();
-        return true;
-    }
+    if (await _db.Loans.AnyAsync(l => l.BookId == id))
+        throw new BusinessRuleException("Cannot delete a book that has loan history.");
+
+    _db.Books.Remove(book);
+    await _db.SaveChangesAsync();
+    return true;
+}
 
     public async Task<bool> IsbnExistsAsync(string isbn, int excludeId = 0)
     {
