@@ -8,12 +8,16 @@ namespace LibraryManagement.Api.Controllers;
 [Route("api/[controller]")]
 public class MembersController : ControllerBase
 {
-  private readonly IMemberService _memberService;
 
-  public MembersController(IMemberService memberService)
+private readonly IMemberService _memberService;
+private readonly ILoanService _loanService;
+
+  public MembersController(IMemberService memberService, ILoanService loanService)
   {
     _memberService = memberService;
+    _loanService = loanService;
   }
+
 
   [HttpGet]
   public async Task<ActionResult<List<MemberDto>>> GetAll()
@@ -54,7 +58,13 @@ public class MembersController : ControllerBase
     var found = await _memberService.DeleteAsync(id);
     return found ? NoContent() : NotFound();
   }
-    
+
+  [HttpGet("{id}/loans")]
+  public async Task<ActionResult<List<LoanDto>>> GetLoans(int id)
+  {
+    return Ok(await _loanService.GetByMemberAsync(id));
+  }
+
     
 
 }
