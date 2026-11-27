@@ -16,10 +16,12 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<BookDto>>> GetAll()
+    public async Task<ActionResult<PagedResult<BookDto>>> GetAll([FromQuery] BookQuery query)
     {
-        return Ok(await _bookService.GetAllAsync());
+        return Ok(await _bookService.GetPagedAsync(query));
     }
+
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<BookDto>> GetById(int id)
